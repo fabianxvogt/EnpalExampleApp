@@ -1,0 +1,39 @@
+﻿@page
+@using App.Db
+@model IndexModel
+@{
+    var api = new EnpalApi("http://localhost:7037/");
+    ViewData["Title"] = "Home page";
+    var powerRecords = await api.GetPowerGenerationData();
+    var wattsGroupedByPanelType = powerRecords.GroupBy(p => p.SolarPanelId)
+        .ToDictionary(p => p.Key, group => group
+            .Sum(p => p.OutputWatt));
+}
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+</div>
+<div>
+    This is a simple chart showing the total amount of power produced, grouped by solar panel type.
+</div>
+<canvas id="myChart" width="400" height="200"></canvas>
+<script>
+    var watts = @Html.Raw(Json.Serialize(wattsGroupedByPanelType)); // Serialize the C# dictionary to JavaScript
+
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var chart = new Chart(ctx, {
+        type: 'bar', // Use a line chart (you can choose other chart types)
+        data: {
+            labels: Object.keys(watts),
+            datasets: [{
+                label: 'Total Watts',
+                data: Object.values(watts),
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+    });
+</script>
